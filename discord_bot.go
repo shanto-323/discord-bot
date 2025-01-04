@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -15,6 +16,7 @@ import (
 func startBot() {
 	godotenv.Load()
 
+	// Add your own pref and discord_token
 	var pref = "~lesgo"
 	token := os.Getenv("DISCORD_TOKEN")
 	sess, err := disGo.New(token)
@@ -32,15 +34,39 @@ func startBot() {
 			return
 		}
 
-		if args[1] == "boom" {
+		if args[1] == "anime" {
 			apiResponse, err := fetchAnime()
 			if err != nil {
 				fmt.Println(err)
 				return
 			}
+
 			discordEm := disGo.MessageEmbed{
-				Title:       apiResponse.Data.Title,
-				Description: apiResponse.Data.Synopsis,
+				Fields: []*disGo.MessageEmbedField{
+					{
+						Name:   "id",
+						Value:  strconv.Itoa(apiResponse.Data.MalID),
+						Inline: true,
+					},
+					{
+						Name:   "Score",
+						Value:  strconv.Itoa(int(apiResponse.Data.Score)),
+						Inline: true,
+					},
+					{
+						Name:   "Title",
+						Value:  apiResponse.Data.Title,
+						Inline: false,
+					},
+					{
+						Name:   "Description",
+						Value:  apiResponse.Data.Synopsis,
+						Inline: false,
+					},
+				},
+				Image: &disGo.MessageEmbedImage{
+					URL: apiResponse.Data.Image.Jpg.ImageURL,
+				},
 			}
 			s.ChannelMessageSendEmbed(m.ChannelID, &discordEm)
 		}
